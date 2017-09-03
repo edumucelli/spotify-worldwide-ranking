@@ -8,7 +8,7 @@ import threading
 
 import requests
 
-DATA_DIRECTORY = 'data.threading'
+DATA_DIRECTORY = 'data'
 
 
 class Collector(threading.Thread):
