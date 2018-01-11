@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, date
 import csv
 import threading
 
+from tqdm import tqdm
 import requests
 
 DATA_DIRECTORY = 'data'
@@ -73,9 +74,7 @@ class Collector(threading.Thread):
             writer = csv.writer(out_csv_file)
             writer.writerow(headers)
 
-            for current_date in self.date_range():
-                print "Collecting from '%s' on %s" % (self.region, current_date)
-
+            for current_date in tqdm(self.date_range(), desc="Collecting from '%s'" % self.region):
                 url = "https://spotifycharts.com/regional/%s/daily/%s/download" % (self.region, current_date)
                 csv_file = self.download_csv_file(url)
                 if csv_file is None:
@@ -84,6 +83,20 @@ class Collector(threading.Thread):
                 for row in self.extract_csv_rows(csv_file):
                     row.extend([current_date, self.region])
                     writer.writerow(row)
+
+    @staticmethod
+    def generate_final_file():
+        final_filename = 'data.csv'
+
+        with open(final_filename, 'w') as outfile:
+            csv_writer = csv.writer(outfile)
+            for filename in tqdm(os.listdir(DATA_DIRECTORY), desc="Generating final file: %s" % final_filename):
+                if filename.endswith(".csv"):
+                    with open(os.path.join(DATA_DIRECTORY, filename)) as infile:
+                        csv_reader = csv.reader(infile)
+                        csv_reader.next()
+                        for row in csv_reader:
+                            csv_writer.writerow(row)
 
 
 if __name__ == "__main__":
@@ -102,3 +115,4 @@ if __name__ == "__main__":
     for region in regions:
         collector = Collector(region, start_date, end_date)
         collector.start()
+    Collector.generate_final_file()
