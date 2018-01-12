@@ -90,6 +90,7 @@ class Collector(threading.Thread):
 
         with open(final_filename, 'w') as outfile:
             csv_writer = csv.writer(outfile)
+            csv_writer.writerow(['Position', 'Track Name', 'Artist', 'Streams', 'URL'])
             for filename in tqdm(os.listdir(DATA_DIRECTORY), desc="Generating final file: %s" % final_filename):
                 if filename.endswith(".csv"):
                     with open(os.path.join(DATA_DIRECTORY, filename)) as infile:
