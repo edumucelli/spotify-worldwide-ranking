@@ -6,6 +6,7 @@ import os
 from datetime import datetime, timedelta, date
 import csv
 import threading
+import time
 
 from tqdm import tqdm
 import requests
@@ -29,11 +30,6 @@ class Collector(threading.Thread):
             yield current_date
             current_date += one_day
 
-    def is_csv_ok(self, download_content):
-        csv_reader = csv.reader(download_content.splitlines(), delimiter=',')
-        headers = next(csv_reader)
-        return set(headers) == set(self.base_headers)
-
     def download_csv_file(self, url):
         with requests.Session() as session:
             download = session.get(url)
@@ -43,7 +39,6 @@ class Collector(threading.Thread):
     def extract_csv_rows(self, csv_file):
         csv_reader = csv.reader(csv_file.splitlines(), delimiter=',')
         # Skip headers (for some reason there's a blank line after headers)
-        next(csv_reader)
         next(csv_reader)
         for row in csv_reader:
             yield row
@@ -66,14 +61,17 @@ class Collector(threading.Thread):
                                      desc="Collecting from '%s'" %
                                      self.region):
 
-                url = "https://spotifycharts.com/regional/ \
-                        %s/daily/%s/download" % (self.region, current_date)
+                url = "https://spotifycharts.com/viral/%s/daily/%s/download" % (self.region, current_date)
 
+                print(url)
                 csv_file = self.download_csv_file(url)
                 if csv_file is None:
+                    print("Skipped date" + current_date)
                     continue
 
                 for row in self.extract_csv_rows(csv_file):
+                    if not row[0].isdigit():
+                        print("ERROR")
                     row.extend([current_date, self.region])
                     writer.writerow(row)
 
@@ -101,7 +99,7 @@ if __name__ == "__main__":
 
     one_day = timedelta(days=1)
     start_date = date(2017, 1, 1)
-    end_date = datetime.now().date() - (2 * one_day)
+    end_date = date(2018, 1, 1)
 
     regions = ["global", "us", "gb", "ad", "ar", "at", "au", "be", "bg",
                "bo", "br", "ca", "ch", "cl", "co", "cr", "cy", "cz", "de",
@@ -111,13 +109,7 @@ if __name__ == "__main__":
                "ph", "pl", "pt", "py", "se", "sg", "sk", "sv", "tr", "tw",
                "uy"]
 
-    threads = []
-    for region in regions:
-        collector = Collector(region, start_date, end_date)
-        collector.start()
-        threads.append(collector)
-
-    for thread in threads:
-        thread.join()
+    collector = Collector("us", start_date, end_date)
+    collector.start()
 
     Collector.generate_final_file()
