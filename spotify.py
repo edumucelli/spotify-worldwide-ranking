@@ -16,7 +16,7 @@ LOG_DIR = 'log'
 # Constants (CHANGE FOR GETTING DIFFERENT VALUES)
 ONE_DAY = timedelta(days=1)
 START_DATE = date(2017, 1, 1)
-END_DATE = date(2017, 12, 31)
+END_DATE = date(2018, 12, 31)
 ITERATIONS = 100
 
 
@@ -27,7 +27,7 @@ class Collector(threading.Thread):
         self.start_date = start_date
         self.end_date = end_date
         self.base_headers = ['Position', 'Track Name', 'Artist',
-                             'Streams', 'URL', 'Date', 'Region']
+                             'Streams', 'URL', 'Year', 'Month', 'Day', 'Region']
 
 
     def date_range(self):
@@ -88,7 +88,8 @@ class Collector(threading.Thread):
 
                     try:
                         if row[0].isdigit() and i < ITERATIONS:
-                            row.extend([current_date, self.region])
+                            row.extend([current_date.year, current_date.month,
+                                        current_date.day, self.region])
                             writer.writerow(row)
                             i += 1
 
@@ -137,5 +138,5 @@ if __name__ == "__main__":
                "ph", "pl", "pt", "py", "se", "sg", "sk", "sv", "tr", "tw",
                "uy"]
 
-    collector = Collector("bo", START_DATE, END_DATE)
+    collector = Collector("global", START_DATE, END_DATE)
     collector.start()
