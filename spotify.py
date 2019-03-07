@@ -3,15 +3,21 @@
 # Modified for working with Python 3 at 2019-02-28: David Afonso Dorta
 
 import os
-from datetime import datetime, timedelta, date
+from datetime import timedelta, date
 import csv
 import threading
-import time
-
-from tqdm import tqdm
 import requests
 
+from tqdm import tqdm
+
 DATA_DIR = 'data'
+LOG_DIR = 'log'
+
+# Constants (CHANGE FOR GETTING DIFFERENT VALUES)
+ONE_DAY = timedelta(days=1)
+START_DATE = date(2017, 1, 1)
+END_DATE = date(2017, 12, 31)
+ITERATIONS = 100
 
 
 class Collector(threading.Thread):
@@ -20,15 +26,16 @@ class Collector(threading.Thread):
         self.region = region
         self.start_date = start_date
         self.end_date = end_date
-        self.base_headers = ['Position',
-                             'Track Name', 'Artist', 'Streams', 'URL']
+        self.base_headers = ['Position', 'Track Name', 'Artist',
+                             'Streams', 'URL', 'Date', 'Region']
+
 
     def date_range(self):
-        one_day = timedelta(days=1)
         current_date = self.start_date
         while current_date <= self.end_date:
             yield current_date
-            current_date += one_day
+            current_date += ONE_DAY
+
 
     def download_csv_file(self, url):
         with requests.Session() as session:
@@ -36,44 +43,70 @@ class Collector(threading.Thread):
 
             return download.content.decode('utf-8')
 
+
     def extract_csv_rows(self, csv_file):
         csv_reader = csv.reader(csv_file.splitlines(), delimiter=',')
-        # Skip headers (for some reason there's a blank line after headers)
+
+        # Skip headers
         next(csv_reader)
+
         for row in csv_reader:
             yield row
+
 
     def run(self):
         if not os.path.exists(DATA_DIR):
             os.makedirs(DATA_DIR)
-
-        headers = self.base_headers + ["Date", "Region"]
+        if not os.path.exists(LOG_DIR):
+            os.makedirs(LOG_DIR)
 
         file_path = os.path.join(DATA_DIR, "%s.csv" % self.region)
-        if os.path.exists(file_path):
-            print("File '%s' already exists, skipping" % file_path)
+        log_path = os.path.join(LOG_DIR, "%s_log.txt" % self.region)
 
-        with open(file_path, 'w', 1) as out_csv_file:
+        with open(file_path, 'w', 1) as out_csv_file, \
+             open(log_path, 'w', 1) as log_file:
+
             writer = csv.writer(out_csv_file)
-            writer.writerow(headers)
+            writer.writerow(self.base_headers)
 
             for current_date in tqdm(self.date_range(),
                                      desc="Collecting from '%s'" %
                                      self.region):
 
-                url = "https://spotifycharts.com/viral/%s/daily/%s/download" % (self.region, current_date)
+                url = "https://spotifycharts.com/regional/%s/daily/%s/download" % (self.region, current_date)
+                print(" " + url)
 
-                print(url)
                 csv_file = self.download_csv_file(url)
                 if csv_file is None:
-                    print("Skipped date" + current_date)
+                    message = "Error getting .csv on %s" % current_date
+                    print(message)
+                    log_file.write(message)
                     continue
 
+                i = 0
                 for row in self.extract_csv_rows(csv_file):
-                    if not row[0].isdigit():
-                        print("ERROR")
-                    row.extend([current_date, self.region])
-                    writer.writerow(row)
+
+                    try:
+                        if row[0].isdigit() and i <= ITERATIONS:
+                            row.extend([current_date, self.region])
+                            writer.writerow(row)
+
+                        i += 1
+
+                    except IndexError:
+                        message = "[%s]: Invalid .csv\n" % current_date
+                        i = ITERATIONS
+                        print(message)
+                        log_file.write(message)
+                        break
+
+                i -= 1
+
+                if i < ITERATIONS:
+                    message = "[%s]: only %d rows\n" % (current_date, i)
+                    print(message)
+                    log_file.write(message)
+
 
     @staticmethod
     def generate_final_file():
@@ -97,9 +130,6 @@ class Collector(threading.Thread):
 
 if __name__ == "__main__":
 
-    one_day = timedelta(days=1)
-    start_date = date(2017, 1, 1)
-    end_date = date(2018, 1, 1)
 
     regions = ["global", "us", "gb", "ad", "ar", "at", "au", "be", "bg",
                "bo", "br", "ca", "ch", "cl", "co", "cr", "cy", "cz", "de",
@@ -109,7 +139,5 @@ if __name__ == "__main__":
                "ph", "pl", "pt", "py", "se", "sg", "sk", "sv", "tr", "tw",
                "uy"]
 
-    collector = Collector("us", start_date, end_date)
+    collector = Collector("global", START_DATE, END_DATE)
     collector.start()
-
-    Collector.generate_final_file()
