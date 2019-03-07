@@ -3,7 +3,7 @@ Automate data collection from Spotify's worldwide ranking in 50+ countries. The 
 
 ## Install:
 First, install the required package dependencies:
-* Using Makefile __(recomended)__
+* Using Makefile __(recommended)__
 ```
 make install
 ```
@@ -12,7 +12,7 @@ make install
 pip3 install -r requirements.txt
 ```
 ## Usage
-### Using make __(recomended)__
+### Using make __(recommended)__
 The `Makefile` included with the script can be easily modified for execution. 
 
 Modify the variables `START_DATE`, `END_DATE`, and `REGION` and execute with `make`
@@ -35,6 +35,6 @@ optional arguments:
 ```
 
 ## Results
-The collected data will be stored on the `data/` directory.
+The extracted data will be stored on the `data/` directory.
 
-Additionally, all errors found while collecting the data will be stored in a `log.txt` file inside `log/`
+Additionally, all errors found while extracting the data will be stored in a `log.txt` file inside `log/`
