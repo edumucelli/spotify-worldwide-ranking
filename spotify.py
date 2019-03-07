@@ -87,11 +87,11 @@ class Collector(threading.Thread):
                 for row in self.extract_csv_rows(csv_file):
 
                     try:
-                        if row[0].isdigit() and i <= ITERATIONS:
+                        if row[0].isdigit() and i < ITERATIONS:
                             row.extend([current_date, self.region])
                             writer.writerow(row)
+                            i += 1
 
-                        i += 1
 
                     except IndexError:
                         message = "[%s]: Invalid .csv\n" % current_date
@@ -99,8 +99,6 @@ class Collector(threading.Thread):
                         print(message)
                         log_file.write(message)
                         break
-
-                i -= 1
 
                 if i < ITERATIONS:
                     message = "[%s]: only %d rows\n" % (current_date, i)
@@ -139,5 +137,5 @@ if __name__ == "__main__":
                "ph", "pl", "pt", "py", "se", "sg", "sk", "sv", "tr", "tw",
                "uy"]
 
-    collector = Collector("global", START_DATE, END_DATE)
+    collector = Collector("bo", START_DATE, END_DATE)
     collector.start()
