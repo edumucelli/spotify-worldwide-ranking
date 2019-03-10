@@ -3,38 +3,22 @@ Automate data collection from Spotify's worldwide ranking in 50+ countries. The 
 
 ## Install
 First, install the required package dependencies:
-* Using Makefile __(recommended)__
+* Using Makefile
 ```
 make install
 ```
-* Using pip
-```
-pip3 install -r requirements.txt
-```
+
 ## Usage
 ### Using make __(recommended)__
 The `Makefile` included with the script can be easily modified for execution. 
 
 Modify the variables `START_DATE`, `END_DATE`, and `REGION` and execute with `make`
 
-### Manually
-The script can be executed with `python3 spotify.py start_date end_date region`
-```
-usage: spotify.py [-h] start_date end_date region
-
-Spotify Charts Data Crawler. Automatically extract data from
-https://spotifycharts.com
-
-positional arguments:
-  start_date  Start date. Format: (yyyy-mm-dd)
-  end_date    End date. Format: (yyy-mm-dd)
-  region      A valid region code
-  
-optional arguments:
-  -h, --help  show this help message and exit
-```
-
 ## Results
 The extracted data will be stored on the `data/` directory.
+The following files will be generated:
+* __region_code.csv__: Top 100 ranking
+* __region_code_waf.csv__: Ranking with audio features for each song
+* __region_code_waf.arff__: Same but in .arff format
 
 Additionally, all errors found while extracting the data will be stored in a `log.txt` file inside `log/`
