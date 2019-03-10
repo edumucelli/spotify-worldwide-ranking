@@ -23,10 +23,13 @@ NEW_HEADERS = [
 
 
 def add_audio_features_to_csv(input_filepath):
-    output_filepath = os.path.splitext(input_filepath)[0] + '_waf.csv'
+    region = os.path.splitext(os.path.basename(input_filepath))[0]
+    output_filepath = 'data/' + region + '_waf.csv'
+    log_filepath = 'log/' + region + '_log.txt'
 
     with open(input_filepath, 'r') as csv_input, \
-            open(output_filepath, 'w') as csv_output:
+            open(output_filepath, 'w') as csv_output, \
+            open(log_filepath, 'a') as log_file:
 
         # Csv files
         reader = csv.reader(csv_input)
@@ -59,11 +62,17 @@ def add_audio_features_to_csv(input_filepath):
             features = SP.audio_features(song_ids)
 
             for song, feature in zip(stored_rows, features):
-                for column in NEW_HEADERS:
-                    song.append(feature[column])
+                try:
+                    for column in NEW_HEADERS:
+                        song.append(feature[column])
 
-                print(song)
-                writer.writerow(song)
+                    print(song)
+                    writer.writerow(song)
+                except TypeError as error:
+                    message = "Couldn't get audio features from " + \
+                        str(song) + "\n"
+                    print(message)
+                    log_file.write(message)
 
             # Reset array and start accumulating the next batch again
             row_count = 0
