@@ -28,7 +28,7 @@ class Collector(threading.Thread):
             current_date += one_day
 
     def is_csv_ok(self, download_content):
-        csv_reader = csv.reader(download_content.splitlines(), delimiter=',')
+        csv_reader = csv.reader(download_content.splitlines()[1:], delimiter=',')
         headers = csv_reader.next()
         return set(headers) == set(self.base_headers)
 
